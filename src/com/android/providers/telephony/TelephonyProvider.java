@@ -41,11 +41,13 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.util.Xml;
+import android.os.SystemProperties;
 
 import com.android.internal.telephony.BaseCommands;
 import com.android.internal.telephony.Phone;
 import com.android.internal.telephony.PhoneConstants;
 import com.android.internal.util.XmlUtils;
+import com.android.internal.telephony.TelephonyProperties;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -61,6 +63,8 @@ public class TelephonyProvider extends ContentProvider
     private static final String DATABASE_NAME = "telephony.db";
     private static final boolean DBG = true;
     private static final boolean VDBG = false;
+    private static final boolean IS_LOCK_APN =
+            SystemProperties.getBoolean("ro.config.lock_apn", false);
 
     private static final int DATABASE_VERSION = 13 << 16;
     private static final int URL_UNKNOWN = 0;
@@ -238,6 +242,7 @@ public class TelephonyProvider extends ContentProvider
                     "max_conns INTEGER default 0," +
                     "wait_time INTEGER default 0," +
                     "max_conns_time INTEGER default 0," +
+                    "is_locked INTEGER default 0," +
                     "mtu INTEGER);");
             if (DBG) log("dbh.createCarriersTable:-");
         }
@@ -526,6 +531,12 @@ public class TelephonyProvider extends ContentProvider
             String mtu = parser.getAttributeValue(null, "mtu");
             if (mtu != null) {
                 map.put(Telephony.Carriers.MTU, Integer.parseInt(mtu));
+            }
+
+            if (IS_LOCK_APN) {
+                map.put(Telephony.Carriers.IS_LOCKED, "1");
+            }else{
+                map.put(Telephony.Carriers.IS_LOCKED, "0");
             }
 
             return map;
